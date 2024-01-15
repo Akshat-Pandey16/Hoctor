@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {% load static %}
+
+  <link rel="stylesheet" href="{% static 'css/home.css' %}" class="css" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track</title>
+</head>
+
+<body>
+
+  <div class="device-container">
+
+    <div class="navbar">
+
+      <div class=" text">
+
+        <div class="head">
+          <h1>
+            <!-- <i
+                    class="fa-sharp fa-solid fa-location-dot fa-flip"
+                    style="color: #ff6600"
+                    ></i
+                    > -->
+            <span style="color: #ff6600">Hoctor</span>
+          </h1>
+          <p class="tagline">Discover. Explore. Locate.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="map">
+      <table class="table-l">
+        <thead>
+          <tr >
+            <th id="ha0" colspan="2">Main Stage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="ha1">Hash Society Home</td>
+            <td id="ha5">Hacking Area 5</td>
+          </tr>
+          <tr>
+            <td id="ha2">Hacking Area 2</td>
+            <td id="ha6">Hacking Area 6</td>
+          </tr>
+          <tr>
+            <td id="ha3">Hacking Area 3</td>
+            <td id="ha7">Hacking Area 7</td>
+          </tr>
+          <tr>
+            <td id="ha4">Hacking Area 4</td>
+            <td id="ha8">Hacking Area 8</td>
+          </tr>
+        </tbody>
+      </table>  
+    </div>
+    <h5>Mini Map</h5>
+  </div>
+  <script>
+    const active = {{li}};
+    const loc = document.querySelector(`#ha${active}`)
+    console.log(loc)
+    loc.classList.add("active");
+    
+    </script>
+</body>
+
+</html>

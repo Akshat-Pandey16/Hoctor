@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {% load static %}
+
+  <link rel="stylesheet" href="{% static 'css/home.css' %}" class="css" />
+  {% comment %} <link rel="stylesheet" href="{% static 'css/tracking.css' %}" class="css" /> {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track</title>
+</head>
+
+<body>
+
+  <div class="device-container">
+
+    <div class="navbar">
+
+      <div class=" text">
+
+        <div class="head">
+          <h1>
+            <!-- <i
+                    class="fa-sharp fa-solid fa-location-dot fa-flip"
+                    style="color: #ff6600"
+                    ></i
+                    > -->
+            <span style="color: #ff6600">Hoctor</span>
+          </h1>
+          <p class="tagline">Discover. Explore. Locate.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="map">
+        <table class="table-l">
+            <thead>
+              <tr>
+                <th id="ha1">Library Entrance</th>
+                <th style="opacity:0;">2</th>
+                <th style="opacity:0;">3</th>
+                <th style="opacity:0;">4</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="ha2" rowspan="2">Entrance</td>
+                <td id="ha3">Room 1</td>
+                <td id="ha4" rowspan="2">Udaan Incubation Centre</td>
+                <td id="ha5" rowspan="2">CFF Entrance</td>
+              </tr>
+              <tr>
+                <td id="ha6">Room2</td>
+              </tr>
+              <tr>
+                <td id="ha7">Staircase</td>
+                <td style="opacity:0;">10</td>
+                <td style="opacity:0;">11</td>
+                <td style="opacity:0;">12</td>
+              </tr>
+            </tbody>
+            </table>
+    </div>
+    <h5> 1st Floor Mini Map</h5>
+  </div>
+    <script>
+    const active = {{li}};
+    const loc = document.querySelector(`#ha${active}`)
+    console.log(loc)
+    loc.classList.add("active");
+    
+    </script> 
+{% comment %} 
+    <script>
+      const active = {{li}};
+      if(li == 1){
+        const loc = document.querySelector(`#ha${active}`)
+        console.log(loc)
+        loc.classList.add("active");
+      }
+    
+    </script> {% endcomment %}
+</body>
+
+</html>

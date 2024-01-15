@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {% load static %}
+
+  <link rel="stylesheet" href="{% static 'css/home.css' %}" class="css" />
+  {% comment %} <link rel="stylesheet" href="{% static 'css/tracking.css' %}" class="css" /> {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track</title>
+</head>
+
+<body>
+
+  <div class="device-container">
+
+    <div class="navbar">
+
+      <div class=" text">
+
+        <div class="head">
+          <h1>
+            <!-- <i
+                    class="fa-sharp fa-solid fa-location-dot fa-flip"
+                    style="color: #ff6600"
+                    ></i
+                    > -->
+            <span style="color: #ff6600">Hoctor</span>
+          </h1>
+          <p class="tagline">Discover. Explore. Locate.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="map">
+      <table class="table-l">
+        <thead>
+          <tr >
+            <th id="ha3">Entrance</th>
+            <th id="ha4" colspan="2">Conference Room</th>
+            
+            <th id="ha0">Automobile Lab</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="ha20">Computer Aided Design</td>
+            <td id="" style="opacity:0;"></td>
+            <td id="" style="opacity:0;"></td>
+            <td id="ha1">Thermal lab</td>
+          </tr>
+          <tr>
+            <td id="ha6">Meeting Room </td>
+            <td id="" style="opacity:0;"></td>
+            <td id="" style="opacity:0;"></td>
+            <td id="ha2">Faculty Room</td>
+          </tr>
+          <tr>
+            <td id="ha8">Hod Room</td>
+            <td id="" style="opacity:0;"></td>
+            <td id="" style="opacity:0;"></td>
+            <td id="ha9">Digital classroom</td>
+          </tr>
+          <tr>
+            <td id="ha10">Material Room</td>
+            <td id="ha11" style="opacity:0;">Seminar Hall</td>
+            <td id="ha12" style="opacity:0;">Lab</td>
+            <td id="ha13">Research Lab</td>
+          </tr>
+          <tr>
+            <td id="ha10">Design & Project </td>
+            <td id="ha11">Lecture Room</td>
+            <td id="ha12">NCC Room</td>
+            <td id="ha13">Lecture Lab</td>
+          </tr>
+        </tbody>
+      </table>  
+    </div>
+    <h5>Mini Map</h5>
+  </div>
+    <script>
+    const active = {{li}};
+    const loc = document.querySelector(`#ha${active}`)
+    console.log(loc)
+    loc.classList.add("active");
+    
+    </script> 
+{% comment %} 
+    <script>
+      const active = {{li}};
+      if(li == 1){
+        const loc = document.querySelector(`#ha${active}`)
+        console.log(loc)
+        loc.classList.add("active");
+      }
+    
+    </script> {% endcomment %}
+</body>
+
+</html>

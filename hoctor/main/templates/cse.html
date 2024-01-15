@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  {% load static %}
+
+  <link rel="stylesheet" href="{% static 'css/home.css' %}" class="css" />
+  {% comment %} <link rel="stylesheet" href="{% static 'css/tracking.css' %}" class="css" /> {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track</title>
+</head>
+
+<body>
+
+  <div class="device-container">
+
+    <div class="navbar">
+
+      <div class=" text">
+
+        <div class="head">
+          <h1>
+            <!-- <i
+                    class="fa-sharp fa-solid fa-location-dot fa-flip"
+                    style="color: #ff6600"
+                    ></i
+                    > -->
+            <span style="color: #ff6600">Hoctor</span>
+          </h1>
+          <p class="tagline">Discover. Explore. Locate.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="map">
+        <table>
+            <thead>
+              <tr>
+                <th id="ha1">Entrance</th>
+                <th id="ha2">Lab 1</th>
+                <th id="ha3">Lab 2</th>
+                <th id="ha4">Lab 3</th>
+                <th id="ha5">Linux lab</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td id="ha17">TPO</td>
+                <td  style="opacity:0;"></td>
+                <td  style="opacity:0;"></td>
+                <td  style="opacity:0;"></td>
+                <td id="ha6">DLink Lab</td>
+              </tr>
+              <tr>
+                <td id="ha16">ETC HOD</td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                <td id="ha7">DSP Lab</td>
+              </tr>
+              <tr>
+                <td id="ha15"> Library </td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                <td id="ha8" rowspan='2'>CSE Seminar</td>
+              </tr>
+              <tr>
+                <td id="ha14">HOD Room</td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                <td style="opacity:0;"></td>
+                {% comment %} <td id="ha10">CSE Seminar</td> {% endcomment %}
+              </tr>
+              <tr>
+                <td id="ha13">ETC Seminar</td>
+                <td id="ha12">Room1</td>
+                <td id="ha11">Room2</td>
+                <td id="ha10"> Room3</td>
+                <td id="ha9">IT Seminar</td>
+              </tr>
+            </tbody>
+            </table>
+    </div>
+    <h5>Mini Map</h5>
+  </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Access the 'name_from_html' variable passed from Django view
+        const name = "{{ name_from_html }}";
+        
+        // Call fetchData with the 'name' variable
+        fetchData(name);
+      });
+
+      function fetchData(name) {
+        const apiUrl = `http://127.0.0.1:8001/get_room/tejas`; // Replace with your FastAPI endpoint URL
+  
+        fetch(apiUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Process the retrieved data
+            console.log(data);
+            highlightRoom(data.room_number);
+          })
+          .catch(error => {
+            console.error('Error fetching data:', error);
+          });
+      }
+
+      function highlightRoom(room_number) {
+        const active = room_number;
+        const loc = document.querySelector(`#ha${active}`);
+        console.log(loc);
+  
+        if (loc) {
+          loc.classList.add("active");
+        }
+      }
+      
+      function cancelReload() {
+        clearTimeout(timeoutId);
+      }
+    </script> 
+{% comment %} 
+    <script>
+      const active = {{li}};
+      if(li == 1){
+        const loc = document.querySelector(`#ha${active}`)
+        console.log(loc)
+        loc.classList.add("active");
+      }
+    
+    </script> {% endcomment %}
+</body>
+
+</html>
