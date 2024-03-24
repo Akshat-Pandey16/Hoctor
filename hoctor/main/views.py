@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from access_points import get_scanner
-from whereami.predict import *
 
 
 from sqlalchemy import create_engine, text

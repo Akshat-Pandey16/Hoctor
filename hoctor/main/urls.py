@@ -1,7 +1,6 @@
 
-from django.urls import path,include
-from . import views
-from .views import *
+from django.urls import path
+from .views import index,home,track,track2
 
 app_name = 'main'
 
