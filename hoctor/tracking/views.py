@@ -297,9 +297,7 @@ class CaptureView(APIView):
                 for r in readings
             ]
         )
-        return Response(
-            FingerprintSerializer(fingerprint).data, status=status.HTTP_201_CREATED
-        )
+        return Response(FingerprintSerializer(fingerprint).data, status=status.HTTP_201_CREATED)
 
 
 class RoomStatsView(APIView):
