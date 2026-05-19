@@ -116,6 +116,22 @@ class TestScanAPI:
 
 
 @pytest.mark.django_db
+class TestDiagnosticsAPI:
+    def test_returns_accuracy_when_trained(self, api_client, trained_venue):
+        venue, _, _ = trained_venue
+        res = api_client.get(f"/api/v1/venues/{venue.slug}/diagnostics/")
+        assert res.status_code == 200
+        body = res.json()
+        assert body["fingerprint_count"] == 8
+        assert body["classifier"] == "knn"
+        assert body["accuracy"] is not None and body["accuracy"] >= 0.75
+        assert isinstance(body["notes"], list)
+
+    def test_returns_404_for_unknown_venue(self, api_client):
+        assert api_client.get("/api/v1/venues/nope/diagnostics/").status_code == 404
+
+
+@pytest.mark.django_db
 class TestHealth:
     def test_health(self, api_client):
         res = api_client.get("/api/v1/health/")
