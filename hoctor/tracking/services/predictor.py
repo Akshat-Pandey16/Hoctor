@@ -180,7 +180,7 @@ class RoomPredictor:
 
             if accuracy is not None and accuracy < 0.6:
                 notes.append(
-                    "Accuracy is low. Try: 10–20 fingerprints per room, captured from multiple "
+                    "Accuracy is low. Try: 10-20 fingerprints per room, captured from multiple "
                     "positions and at different times so the model sees natural signal variance."
                 )
 
@@ -243,6 +243,9 @@ class RoomPredictor:
                 len(feature_keys),
             )
             return trained
+
+    def _model_path(self, venue: Venue) -> Path:
+        return self._model_dir / f"venue-{venue.pk}.joblib"
 
     def _build_classifier(self, n_samples: int):
         kind = settings.HOCTOR["CLASSIFIER"]
