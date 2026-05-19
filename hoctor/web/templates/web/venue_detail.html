@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ venue.name }} — Hoctor{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-xs text-slate-500">
+  <a href="{% url 'web:dashboard' %}" class="hover:text-brand-300">Dashboard</a>
+  <span class="px-1.5">/</span>
+  <span class="text-slate-300">{{ venue.name }}</span>
+</nav>
+
+<header class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 sm:p-8">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight">{{ venue.name }}</h1>
+      {% if venue.address %}<p class="mt-1 text-sm text-slate-400">{{ venue.address }}</p>{% endif %}
+      {% if venue.description %}<p class="mt-3 max-w-2xl text-sm text-slate-300">{{ venue.description }}</p>{% endif %}
+    </div>
+    <a href="{% url 'web:track' %}?venue={{ venue.slug }}" class="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-brand-400">Scan here</a>
+  </div>
+</header>
+
+<section class="mt-8">
+  <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Rooms ({{ rooms|length }})</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for room in rooms %}
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+        <div class="flex items-start justify-between">
+          <h3 class="font-semibold text-white">{{ room.name }}</h3>
+          <span class="text-xs text-slate-500">Floor {{ room.floor }}</span>
+        </div>
+        {% if room.room_number %}<p class="mt-0.5 text-xs text-slate-500">Room #{{ room.room_number }}</p>{% endif %}
+        <div class="mt-4 flex items-center justify-between text-xs">
+          <span class="text-slate-400">{{ room.fingerprint_count }} fingerprint{{ room.fingerprint_count|pluralize }}</span>
+          {% if room.fingerprint_count == 0 %}
+            <span class="rounded bg-amber-500/10 px-2 py-0.5 text-amber-300">untrained</span>
+          {% else %}
+            <span class="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">trained</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="mt-10">
+  <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Recent scans</h2>
+  <div class="overflow-hidden rounded-2xl border border-slate-800">
+    <table class="min-w-full divide-y divide-slate-800 text-sm">
+      <thead class="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-500">
+        <tr>
+          <th class="px-4 py-3 text-left font-medium">When</th>
+          <th class="px-4 py-3 text-left font-medium">Device</th>
+          <th class="px-4 py-3 text-left font-medium">Prediction</th>
+          <th class="px-4 py-3 text-right font-medium">Confidence</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800 bg-slate-950/50">
+        {% for scan in recent_scans %}
+          <tr>
+            <td class="px-4 py-3 text-slate-400">{{ scan.created_at|timesince }} ago</td>
+            <td class="px-4 py-3 text-slate-300">{{ scan.device.name|default:'—' }}</td>
+            <td class="px-4 py-3">
+              {% if scan.predicted_room %}<span class="font-medium">{{ scan.predicted_room.name }}</span>{% else %}<span class="text-rose-400">{{ scan.error|default:'—' }}</span>{% endif %}
+            </td>
+            <td class="px-4 py-3 text-right tabular-nums text-slate-300">{% if scan.confidence %}{{ scan.confidence|floatformat:2 }}{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No scans for this venue yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

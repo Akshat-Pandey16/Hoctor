@@ -1,0 +1,75 @@
+{% load static %}<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>{% block title %}Hoctor — Indoor Location Tracker{% endblock %}</title>
+    <meta name="description" content="Indoor Wi-Fi fingerprint location tracker built with Django." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📍</text></svg>" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script defer src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.7/dist/cdn.min.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#fff5ed',
+                100: '#ffe7d3',
+                200: '#ffc99e',
+                300: '#ffa763',
+                400: '#ff8a3a',
+                500: '#ff6600',
+                600: '#e55400',
+                700: '#b84100',
+                800: '#7a2c00',
+                900: '#3f1700',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+              mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  </head>
+  <body class="min-h-full bg-slate-950 text-slate-100 font-sans antialiased selection:bg-brand-500/30">
+    <header class="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur sticky top-0 z-30">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+        <a href="{% url 'web:landing' %}" class="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/15 text-brand-400">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+              <path d="M12 2C7.6 2 4 5.6 4 10c0 5.5 6.6 11.5 7.4 12.2.3.3.9.3 1.2 0C13.4 21.5 20 15.5 20 10c0-4.4-3.6-8-8-8Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+            </svg>
+          </span>
+          Hoctor
+        </a>
+        <nav class="flex items-center gap-1 text-sm">
+          <a href="{% url 'web:dashboard' %}" class="rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition">Dashboard</a>
+          <a href="{% url 'web:track' %}" class="rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition">Track</a>
+          <a href="/api/docs/" class="rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white transition">API</a>
+          <a href="/admin/" class="ml-1 rounded-lg bg-brand-500 px-3 py-2 font-medium text-slate-950 hover:bg-brand-400 transition">Admin</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="mt-12 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+      <p>Hoctor &middot; Indoor Wi-Fi positioning &middot; Built with Django {{ django_version|default:'6.x' }}</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

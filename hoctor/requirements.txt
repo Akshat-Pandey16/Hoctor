@@ -1,7 +1,0 @@
-django
-access_points
-whereami
-sqlalchemy
-pymysql
-fastapi
-uvicorn

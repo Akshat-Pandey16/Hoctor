@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Track — Hoctor{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl font-semibold tracking-tight">Live tracker</h1>
+  <p class="mt-1 text-sm text-slate-400">Run a Wi-Fi scan and let Hoctor predict which room the signal came from.</p>
+</div>
+
+<div x-data="hoctorTracker()" class="grid gap-8 lg:grid-cols-5">
+  <section class="lg:col-span-2 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <div>
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Venue</label>
+      <select x-model="venue" class="mt-1 w-full rounded-lg border-slate-700 bg-slate-950 text-slate-100 focus:border-brand-400 focus:ring-brand-400">
+        {% for venue in venues %}
+          <option value="{{ venue.slug }}">{{ venue.name }}</option>
+        {% empty %}
+          <option disabled>No venues — seed first</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Device</label>
+      <input list="devices" x-model="device" class="mt-1 w-full rounded-lg border-slate-700 bg-slate-950 text-slate-100 placeholder-slate-500 focus:border-brand-400 focus:ring-brand-400" placeholder="e.g. Tejas" />
+      <datalist id="devices">
+        {% for d in devices %}<option value="{{ d.name }}"></option>{% endfor %}
+      </datalist>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+      <label class="flex items-start gap-3 text-sm">
+        <input type="checkbox" x-model="useHardware" class="mt-1 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-400" />
+        <span>
+          <span class="font-medium text-slate-200">Use hardware scanner</span>
+          <span class="block text-xs text-slate-500">Requires <code class="rounded bg-slate-800 px-1 text-brand-300">uv sync --extra scan</code> on a host with Wi-Fi.</span>
+        </span>
+      </label>
+    </div>
+
+    <div x-show="!useHardware">
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Simulated samples (JSON)</label>
+      <textarea x-model="samplesJson" rows="6" class="mt-1 w-full rounded-lg border-slate-700 bg-slate-950 font-mono text-xs text-slate-200 focus:border-brand-400 focus:ring-brand-400" spellcheck="false"></textarea>
+      <button type="button" @click="populateFromVenue()" class="mt-2 text-xs text-brand-300 hover:text-brand-200">⟳ Load demo samples</button>
+    </div>
+
+    <button type="button" @click="runScan()" :disabled="loading" class="w-full rounded-xl bg-brand-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-60">
+      <span x-show="!loading">Run scan</span>
+      <span x-show="loading">Scanning…</span>
+    </button>
+  </section>
+
+  <section class="lg:col-span-3 space-y-6">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 min-h-[180px]" x-show="result || error">
+      <template x-if="result && result.predicted_room_name">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-500">Predicted room</p>
+          <p class="mt-1 text-3xl font-semibold text-white" x-text="result.predicted_room_name"></p>
+          <p class="text-sm text-slate-400" x-text="result.venue_slug"></p>
+          <div class="mt-4">
+            <p class="text-xs uppercase tracking-widest text-slate-500">Confidence</p>
+            <div class="mt-1 flex items-center gap-3">
+              <div class="h-2 flex-1 rounded-full bg-slate-800">
+                <div class="h-full rounded-full bg-brand-400" :style="`width:${(result.confidence||0)*100}%`"></div>
+              </div>
+              <span class="tabular-nums text-sm font-medium" x-text="((result.confidence||0)*100).toFixed(1) + '%'"></span>
+            </div>
+          </div>
+          <div class="mt-5">
+            <p class="mb-2 text-xs uppercase tracking-widest text-slate-500">Per-room probability</p>
+            <ul class="space-y-2 text-xs">
+              <template x-for="(p, name) in result.probabilities" :key="name">
+                <li>
+                  <div class="flex justify-between text-slate-300"><span x-text="name"></span><span x-text="(p*100).toFixed(1) + '%'"></span></div>
+                  <div class="mt-1 h-1.5 rounded-full bg-slate-800"><div class="h-full rounded-full bg-slate-500" :style="`width:${p*100}%`"></div></div>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </template>
+
+      <template x-if="result && !result.predicted_room_name">
+        <p class="text-sm text-amber-300">Scan recorded, but no prediction. Reason: <span x-text="result.error || 'unknown'"></span>. Try adding more training fingerprints in the admin.</p>
+      </template>
+
+      <template x-if="error">
+        <p class="text-sm text-rose-300" x-text="error"></p>
+      </template>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6" x-show="!result && !error">
+      <p class="text-sm text-slate-400">Pick a venue, optionally name your device, then hit <span class="font-semibold text-brand-300">Run scan</span>. The result and per-room probabilities appear here.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  function hoctorTracker() {
+    const csrfToken = '{{ csrf_token }}';
+    const demoSamples = [
+      { ssid: 'ap_bitdurg-cse-block_0', bssid: '00:11:22:33:44:55', signal: -45, frequency: 2412 },
+      { ssid: 'ap_bitdurg-cse-block_1', bssid: '00:11:22:33:44:56', signal: -62, frequency: 2412 },
+      { ssid: 'ap_bitdurg-cse-block_2', bssid: '00:11:22:33:44:57', signal: -71, frequency: 2412 },
+      { ssid: 'ap_bitdurg-cse-block_3', bssid: '00:11:22:33:44:58', signal: -80, frequency: 2412 },
+    ];
+    return {
+      venue: '{{ venues.0.slug|default_if_none:'' }}',
+      device: '',
+      useHardware: false,
+      samplesJson: JSON.stringify(demoSamples, null, 2),
+      loading: false,
+      result: null,
+      error: null,
+      populateFromVenue() {
+        this.samplesJson = JSON.stringify(demoSamples, null, 2);
+      },
+      async runScan() {
+        this.loading = true;
+        this.error = null;
+        this.result = null;
+        let body = { venue: this.venue, device: this.device, use_scanner: this.useHardware };
+        if (!this.useHardware) {
+          try {
+            body.samples = JSON.parse(this.samplesJson);
+          } catch (e) {
+            this.error = 'Samples JSON is invalid: ' + e.message;
+            this.loading = false;
+            return;
+          }
+        }
+        try {
+          const res = await fetch('/api/v1/scans/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            this.error = data.detail || JSON.stringify(data);
+          } else {
+            this.result = data;
+          }
+        } catch (e) {
+          this.error = e.message;
+        } finally {
+          this.loading = false;
+        }
+      },
+    };
+  }
+</script>
+{% endblock %}

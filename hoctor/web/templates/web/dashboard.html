@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Hoctor{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight">Dashboard</h1>
+    <p class="mt-1 text-sm text-slate-400">All venues, devices, and recent activity at a glance.</p>
+  </div>
+  <a href="{% url 'web:track' %}" class="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-brand-400">+ Run scan</a>
+</div>
+
+<section class="grid gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Venues</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for venue in venues %}
+        <a href="{% url 'web:venue-detail' venue.slug %}" class="group rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition hover:border-brand-500/60 hover:bg-slate-900">
+          <div class="flex items-start justify-between gap-2">
+            <h3 class="text-lg font-semibold text-white">{{ venue.name }}</h3>
+            <span class="rounded-md bg-slate-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400 group-hover:text-brand-300">{{ venue.slug }}</span>
+          </div>
+          {% if venue.address %}<p class="mt-1 text-xs text-slate-500">{{ venue.address }}</p>{% endif %}
+          <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt class="text-xs text-slate-500">Rooms</dt>
+              <dd class="mt-0.5 text-xl font-semibold">{{ venue.room_count }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-slate-500">Fingerprints</dt>
+              <dd class="mt-0.5 text-xl font-semibold">{{ venue.fingerprint_count }}</dd>
+            </div>
+          </dl>
+        </a>
+      {% empty %}
+        <p class="rounded-2xl border border-dashed border-slate-800 p-8 text-center text-sm text-slate-500">
+          No venues yet. Run <code class="rounded bg-slate-800 px-1.5 py-0.5 text-xs text-brand-300">make seed</code> to load demo data.
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div>
+    <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Devices</h2>
+    <div class="space-y-2">
+      {% for device in devices %}
+        <div class="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3">
+          <div>
+            <p class="font-medium text-white">{{ device.name }}</p>
+            <p class="text-xs text-slate-500">
+              {% if device.last_seen_at %}Last seen {{ device.last_seen_at|timesince }} ago{% else %}No scans yet{% endif %}
+            </p>
+          </div>
+          <span class="h-2 w-2 rounded-full {% if device.last_seen_at %}bg-emerald-400{% else %}bg-slate-600{% endif %}"></span>
+        </div>
+      {% empty %}
+        <p class="rounded-xl border border-dashed border-slate-800 p-6 text-center text-sm text-slate-500">No devices.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="mt-10">
+  <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">Recent scans</h2>
+  <div class="overflow-hidden rounded-2xl border border-slate-800">
+    <table class="min-w-full divide-y divide-slate-800 text-sm">
+      <thead class="bg-slate-900/60 text-xs uppercase tracking-wider text-slate-500">
+        <tr>
+          <th class="px-4 py-3 text-left font-medium">When</th>
+          <th class="px-4 py-3 text-left font-medium">Venue</th>
+          <th class="px-4 py-3 text-left font-medium">Device</th>
+          <th class="px-4 py-3 text-left font-medium">Prediction</th>
+          <th class="px-4 py-3 text-right font-medium">Confidence</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-800 bg-slate-950/50">
+        {% for scan in recent_scans %}
+          <tr class="hover:bg-slate-900/60">
+            <td class="px-4 py-3 text-slate-400">{{ scan.created_at|timesince }} ago</td>
+            <td class="px-4 py-3"><a class="hover:text-brand-300" href="{% url 'web:venue-detail' scan.venue.slug %}">{{ scan.venue.name }}</a></td>
+            <td class="px-4 py-3 text-slate-300">{{ scan.device.name|default:'—' }}</td>
+            <td class="px-4 py-3">
+              {% if scan.predicted_room %}
+                <span class="font-medium text-white">{{ scan.predicted_room.name }}</span>
+              {% else %}
+                <span class="text-rose-400">{{ scan.error|default:'no prediction' }}</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right tabular-nums text-slate-300">
+              {% if scan.confidence %}{{ scan.confidence|floatformat:2 }}{% else %}—{% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">No scans yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Hoctor — Discover. Explore. Locate.{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-950 to-brand-900/40 p-8 sm:p-14">
+  <div class="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-500/20 blur-3xl"></div>
+  <div class="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
+
+  <div class="relative grid items-center gap-10 lg:grid-cols-5">
+    <div class="lg:col-span-3">
+      <p class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs text-brand-300">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse"></span>
+        Indoor positioning, without extra hardware
+      </p>
+      <h1 class="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+        <span class="bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">Hoctor</span>
+        knows which room you're in.
+      </h1>
+      <p class="mt-4 max-w-xl text-lg text-slate-300">
+        Capture a Wi-Fi fingerprint per room, then let a tiny machine learning model figure out where a device is — all over your existing Wi-Fi.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="{% url 'web:dashboard' %}" class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-brand-400">
+          Open dashboard
+        </a>
+        <a href="{% url 'web:track' %}" class="rounded-xl border border-slate-700 bg-slate-900/60 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-brand-400 hover:text-brand-300">
+          Try a live scan
+        </a>
+        <a href="/api/docs/" class="rounded-xl px-5 py-3 text-sm font-semibold text-slate-300 transition hover:text-white">
+          API docs &rarr;
+        </a>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2">
+      <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-5 shadow-2xl">
+        <p class="text-xs uppercase tracking-widest text-slate-500">Sample prediction</p>
+        <div class="mt-4 flex items-end justify-between">
+          <div>
+            <p class="text-3xl font-semibold text-white">Lab 02</p>
+            <p class="text-sm text-slate-400">BitDurg CSE Block · Floor 1</p>
+          </div>
+          <span class="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300">98%</span>
+        </div>
+        <div class="mt-5 space-y-2 text-xs">
+          <div>
+            <div class="flex justify-between text-slate-400"><span>Lab 02</span><span>94%</span></div>
+            <div class="mt-1 h-1.5 rounded-full bg-slate-800"><div class="h-full w-[94%] rounded-full bg-brand-400"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-slate-400"><span>Lab 01</span><span>4%</span></div>
+            <div class="mt-1 h-1.5 rounded-full bg-slate-800"><div class="h-full w-[4%] rounded-full bg-slate-600"></div></div>
+          </div>
+          <div>
+            <div class="flex justify-between text-slate-400"><span>Faculty Room</span><span>2%</span></div>
+            <div class="mt-1 h-1.5 rounded-full bg-slate-800"><div class="h-full w-[2%] rounded-full bg-slate-600"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path d="M5 13a7 7 0 0 1 14 0"/><path d="M8.5 16a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>
+    </div>
+    <h3 class="mt-4 text-lg font-semibold">Wi-Fi fingerprinting</h3>
+    <p class="mt-2 text-sm text-slate-400">Each room has a unique signature of nearby access points and signal strengths. We turn that signature into ML features.</p>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+    </div>
+    <h3 class="mt-4 text-lg font-semibold">Random forest predictor</h3>
+    <p class="mt-2 text-sm text-slate-400">Per-venue sklearn classifier with on-disk caching and signal-based invalidation when training data changes.</p>
+  </div>
+  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-400">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
+    </div>
+    <h3 class="mt-4 text-lg font-semibold">Clean REST API</h3>
+    <p class="mt-2 text-sm text-slate-400">Documented OpenAPI surface (Swagger + ReDoc) with venues, rooms, fingerprints, devices, and scans.</p>
+  </div>
+</section>
+{% endblock %}
