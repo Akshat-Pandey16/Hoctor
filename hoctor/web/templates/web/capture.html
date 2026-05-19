@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Capture — Hoctor{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight">Capture fingerprints</h1>
+    <p class="mt-1 text-sm text-slate-400">Walk to a room, hit <span class="font-medium text-brand-300">Capture sample</span> a few times. Each tap records the Wi-Fi signature for that room.</p>
+  </div>
+  <a href="{% url 'web:track' %}" class="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-200 hover:border-brand-400 hover:text-brand-300">Test prediction →</a>
+</div>
+
+<div x-data="hoctorCapture()" x-init="init()" class="grid gap-8 lg:grid-cols-5">
+  <section class="lg:col-span-2 space-y-5 rounded-2xl border border-slate-800 bg-slate-900/50 p-6 lg:sticky lg:top-20 self-start">
+    <div>
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Venue</label>
+      <div class="mt-1 flex gap-2">
+        <select x-model="venue" @change="onVenueChange()" class="flex-1 rounded-lg border-slate-700 bg-slate-950 text-slate-100 focus:border-brand-400 focus:ring-brand-400">
+          <option value="">Pick venue…</option>
+          <template x-for="v in venues" :key="v.slug"><option :value="v.slug" x-text="v.name"></option></template>
+        </select>
+        <button type="button" @click="newVenue()" class="rounded-lg border border-slate-700 px-3 text-sm text-slate-300 hover:border-brand-400 hover:text-brand-300" title="Create venue">+</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Room</label>
+      <div class="mt-1 flex gap-2">
+        <select x-model="room" @change="loadStats()" :disabled="!venue" class="flex-1 rounded-lg border-slate-700 bg-slate-950 text-slate-100 focus:border-brand-400 focus:ring-brand-400 disabled:opacity-50">
+          <option value="">Pick room…</option>
+          <template x-for="r in currentRooms()" :key="r.slug"><option :value="r.slug" x-text="r.name"></option></template>
+        </select>
+        <button type="button" @click="newRoom()" :disabled="!venue" class="rounded-lg border border-slate-700 px-3 text-sm text-slate-300 hover:border-brand-400 hover:text-brand-300 disabled:opacity-50" title="Create room">+</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Device (optional)</label>
+      <input list="devices" x-model="device" placeholder="e.g. akshat-laptop" class="mt-1 w-full rounded-lg border-slate-700 bg-slate-950 text-slate-100 placeholder-slate-500 focus:border-brand-400 focus:ring-brand-400" />
+      <datalist id="devices">{% for d in devices %}<option value="{{ d.name }}"></option>{% endfor %}</datalist>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+      <label class="flex items-start gap-3 text-sm">
+        <input type="checkbox" x-model="useHardware" class="mt-1 rounded border-slate-600 bg-slate-900 text-brand-500 focus:ring-brand-400" />
+        <span>
+          <span class="font-medium text-slate-200">Use the host's real Wi-Fi card</span>
+          <span class="block text-xs text-slate-500">Requires <code class="rounded bg-slate-800 px-1 text-brand-300">uv sync --extra scan</code> and <code class="rounded bg-slate-800 px-1 text-brand-300">HOCTOR_SCANNER_BACKEND=hardware</code>. Otherwise uses the mock scanner.</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <label class="text-xs font-semibold uppercase tracking-widest text-slate-500">Burst</label>
+      <input type="number" min="1" max="20" x-model.number="burst" class="w-20 rounded-lg border-slate-700 bg-slate-950 text-slate-100 focus:border-brand-400 focus:ring-brand-400" />
+      <span class="text-xs text-slate-500">samples, ~1.5s apart</span>
+    </div>
+
+    <div class="space-y-2">
+      <button type="button" @click="captureOne()" :disabled="!canCapture || busy" class="w-full rounded-xl bg-brand-500 px-4 py-4 text-base font-semibold text-slate-950 transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50">
+        <span x-show="!busy">📍 Capture sample</span>
+        <span x-show="busy && burstRemaining === 0">Capturing…</span>
+        <span x-show="busy && burstRemaining > 0" x-text="`Burst ${burst - burstRemaining + 1}/${burst}`"></span>
+      </button>
+      <button type="button" @click="captureBurst()" :disabled="!canCapture || busy" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 hover:border-brand-400 hover:text-brand-300 disabled:cursor-not-allowed disabled:opacity-50">
+        Capture burst of <span x-text="burst"></span>
+      </button>
+    </div>
+
+    <p x-show="error" x-text="error" class="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-300"></p>
+  </section>
+
+  <section class="lg:col-span-3 space-y-6">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Selected room</p>
+      <div class="mt-2 flex items-baseline justify-between gap-4">
+        <div>
+          <p class="text-2xl font-semibold" x-text="selectedRoomLabel() || 'Pick a venue and room to start'"></p>
+          <p class="text-sm text-slate-400" x-show="stats.last_captured_at" x-text="`Last sample ${timeAgo(stats.last_captured_at)} ago`"></p>
+          <p class="text-sm text-slate-500" x-show="!stats.last_captured_at && room">No samples yet for this room.</p>
+        </div>
+        <div class="text-right">
+          <p class="text-4xl font-semibold tabular-nums text-brand-300" x-text="stats.fingerprint_count ?? 0"></p>
+          <p class="text-xs text-slate-500">fingerprints</p>
+        </div>
+      </div>
+      <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+        <div class="h-full bg-brand-500 transition-all" :style="`width:${Math.min((stats.fingerprint_count ?? 0) / 10, 1) * 100}%`"></div>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">Rule of thumb: aim for ~10 samples per room from different spots.</p>
+    </div>
+
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <p class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">This session ({{ '' }}<span x-text="captures.length"></span>)</p>
+      <div class="max-h-[400px] space-y-2 overflow-y-auto" x-show="captures.length > 0">
+        <template x-for="c in captures" :key="c.id">
+          <div class="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm animate-fade-in">
+            <div>
+              <p class="font-medium text-white" x-text="c.room_label"></p>
+              <p class="text-xs text-slate-500" x-text="`${c.sample_count} APs · ${timeAgo(c.captured_at)} ago`"></p>
+            </div>
+            <span class="rounded bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">saved</span>
+          </div>
+        </template>
+      </div>
+      <p x-show="captures.length === 0" class="text-sm text-slate-500">Captures from this session will show up here.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  function hoctorCapture() {
+    const csrfToken = '{{ csrf_token }}';
+    const venuesPayload = {{ venues_json|default:'[]'|safe }};
+    return {
+      venues: venuesPayload,
+      venue: '',
+      room: '',
+      device: '',
+      useHardware: false,
+      burst: 5,
+      burstRemaining: 0,
+      busy: false,
+      error: null,
+      stats: { fingerprint_count: 0, last_captured_at: null },
+      captures: [],
+
+      async init() {
+        if (!this.venues.length) {
+          const res = await fetch('/api/v1/venues/');
+          this.venues = await res.json();
+          for (const v of this.venues) {
+            const r = await fetch(`/api/v1/venues/${v.slug}/rooms/`);
+            v.rooms = await r.json();
+          }
+        }
+      },
+      currentRooms() {
+        const v = this.venues.find(x => x.slug === this.venue);
+        return v ? (v.rooms || []) : [];
+      },
+      selectedRoomLabel() {
+        const v = this.venues.find(x => x.slug === this.venue);
+        if (!v) return '';
+        const r = (v.rooms || []).find(x => x.slug === this.room);
+        if (!r) return `${v.name} — pick a room`;
+        return `${v.name} · ${r.name}`;
+      },
+      get canCapture() { return this.venue && this.room; },
+      onVenueChange() { this.room = ''; this.stats = { fingerprint_count: 0, last_captured_at: null }; },
+      async loadStats() {
+        if (!this.venue || !this.room) return;
+        const res = await fetch(`/api/v1/venues/${this.venue}/rooms/${this.room}/stats/`);
+        if (res.ok) this.stats = await res.json();
+      },
+      async newVenue() {
+        const name = prompt('Venue name (e.g. My Home)');
+        if (!name) return;
+        const res = await fetch('/api/v1/venues/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) { this.error = 'Could not create venue'; return; }
+        const v = await res.json();
+        v.rooms = [];
+        this.venues.push(v);
+        this.venue = v.slug;
+      },
+      async newRoom() {
+        const name = prompt('Room name (e.g. Living Room)');
+        if (!name) return;
+        const floor = parseInt(prompt('Floor (number, defaults to 0)', '0') || '0', 10);
+        const res = await fetch(`/api/v1/venues/${this.venue}/rooms/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ name, floor }),
+        });
+        if (!res.ok) { this.error = 'Could not create room'; return; }
+        const r = await res.json();
+        const v = this.venues.find(x => x.slug === this.venue);
+        v.rooms = [...(v.rooms || []), r];
+        this.room = r.slug;
+        await this.loadStats();
+      },
+      async captureOne() {
+        this.error = null;
+        this.busy = true;
+        try {
+          const body = {
+            venue: this.venue,
+            room: this.room,
+            device: this.device,
+            use_scanner: this.useHardware,
+          };
+          if (!this.useHardware) body.samples = this.demoSamples();
+          const res = await fetch('/api/v1/capture/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          if (!res.ok) { this.error = data.detail || JSON.stringify(data); return; }
+          const v = this.venues.find(x => x.slug === this.venue);
+          const r = (v.rooms || []).find(x => x.slug === this.room);
+          this.captures.unshift({
+            id: data.id,
+            room_label: `${v.name} · ${r.name}`,
+            sample_count: (data.samples || []).length,
+            captured_at: data.captured_at,
+          });
+          await this.loadStats();
+        } catch (e) {
+          this.error = e.message;
+        } finally {
+          this.busy = false;
+        }
+      },
+      async captureBurst() {
+        this.burstRemaining = this.burst;
+        for (let i = 0; i < this.burst; i++) {
+          this.burstRemaining = this.burst - i;
+          await this.captureOne();
+          if (i < this.burst - 1) await new Promise(r => setTimeout(r, 1500));
+        }
+        this.burstRemaining = 0;
+      },
+      demoSamples() {
+        const base = (this.venue + ':' + this.room).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        const out = [];
+        for (let i = 0; i < 6; i++) {
+          const j = ((base + i * 17) % 60) - 30;
+          out.push({
+            ssid: `mock-ap-${i}`,
+            bssid: `00:11:22:33:44:${(i + 10).toString(16).padStart(2, '0')}`,
+            signal: -45 + j,
+          });
+        }
+        return out;
+      },
+      timeAgo(iso) {
+        if (!iso) return '';
+        const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+        if (s < 60) return `${s}s`;
+        if (s < 3600) return `${Math.floor(s / 60)}m`;
+        return `${Math.floor(s / 3600)}h`;
+      },
+    };
+  }
+</script>
+{% endblock %}

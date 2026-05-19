@@ -63,6 +63,22 @@ class FingerprintSerializer(serializers.ModelSerializer):
         return fingerprint
 
 
+class CaptureInputSerializer(serializers.Serializer):
+    venue = serializers.SlugField()
+    room = serializers.SlugField()
+    device = serializers.CharField(required=False, allow_blank=True)
+    samples = AccessPointSampleSerializer(many=True, required=False)
+    use_scanner = serializers.BooleanField(required=False, default=False)
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=255)
+
+    def validate(self, attrs):
+        if not attrs.get("samples") and not attrs.get("use_scanner"):
+            raise serializers.ValidationError(
+                "Provide `samples` or set `use_scanner=true` to scan from hardware."
+            )
+        return attrs
+
+
 class ScanInputSerializer(serializers.Serializer):
     venue = serializers.SlugRelatedField(slug_field="slug", queryset=Venue.objects.all())
     device = serializers.CharField(required=False, allow_blank=True)

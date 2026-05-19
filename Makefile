@@ -34,6 +34,16 @@ makemigrations: ## Generate new migrations
 seed: ## Seed demo venues, rooms, and fingerprints
 	$(MANAGE) seed_demo
 
+capture: ## Capture real-Wi-Fi fingerprints. Usage: make capture VENUE=my-home ROOM=living-room [N=5]
+	$(MANAGE) capture_fingerprint --venue=$(VENUE) --room=$(ROOM) --samples=$${N:-5} --backend=$${BACKEND:-hardware}
+
+scan-now: ## One-off prediction from the host's Wi-Fi. Usage: make scan-now VENUE=my-home [DEVICE=laptop]
+	$(MANAGE) shell -c "from hoctor.tracking.services import get_scanner, get_predictor; \
+from hoctor.venues.models import Venue; \
+v = Venue.objects.get(slug='$(VENUE)'); \
+r = get_predictor().predict(v, get_scanner('hardware').scan()); \
+print(r)"
+
 reset-db: ## Drop and re-seed local sqlite DB
 	rm -f db.sqlite3
 	$(MAKE) migrate

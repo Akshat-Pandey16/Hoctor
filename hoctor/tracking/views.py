@@ -14,6 +14,7 @@ from hoctor.venues.models import Room
 
 from .models import Device, Fingerprint, Scan
 from .serializers import (
+    CaptureInputSerializer,
     DeviceSerializer,
     FingerprintSerializer,
     ScanInputSerializer,
@@ -231,6 +232,109 @@ class ScanDetailView(APIView):
             pk=pk,
         )
         return Response(ScanSerializer(scan).data)
+
+
+class CaptureView(APIView):
+    serializer_class = CaptureInputSerializer
+
+    @extend_schema(
+        operation_id="capture_create",
+        request=CaptureInputSerializer,
+        responses={201: FingerprintSerializer},
+    )
+    @transaction.atomic
+    def post(self, request):
+        serializer = CaptureInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        room = get_object_or_404(
+            Room.objects.select_related("venue"),
+            venue__slug=data["venue"],
+            slug=data["room"],
+        )
+
+        readings = (
+            get_scanner().scan()
+            if data.get("use_scanner")
+            else [
+                AccessPointReading(
+                    ssid=s["ssid"],
+                    bssid=s.get("bssid", ""),
+                    signal=s["signal"],
+                    frequency=s.get("frequency"),
+                )
+                for s in data.get("samples", [])
+            ]
+        )
+        if not readings:
+            return Response(
+                {"detail": "Scan returned no access points."},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        device = None
+        if data.get("device"):
+            device, _ = Device.objects.get_or_create(name=data["device"].strip())
+
+        fingerprint = Fingerprint.objects.create(
+            room=room,
+            device=device,
+            captured_at=timezone.now(),
+            notes=data.get("notes", "")[:255],
+        )
+        from .models import AccessPointSample
+
+        AccessPointSample.objects.bulk_create(
+            [
+                AccessPointSample(
+                    fingerprint=fingerprint,
+                    ssid=r.ssid,
+                    bssid=r.bssid,
+                    signal=r.signal,
+                    frequency=r.frequency,
+                )
+                for r in readings
+            ]
+        )
+        return Response(
+            FingerprintSerializer(fingerprint).data, status=status.HTTP_201_CREATED
+        )
+
+
+class RoomStatsView(APIView):
+    @extend_schema(
+        operation_id="rooms_stats",
+        responses=inline_serializer(
+            name="RoomStats",
+            fields={
+                "venue": serializers.CharField(),
+                "room": serializers.CharField(),
+                "fingerprint_count": serializers.IntegerField(),
+                "last_captured_at": serializers.DateTimeField(allow_null=True),
+            },
+        ),
+    )
+    def get(self, request, venue_slug: str, room_slug: str):
+        room = get_object_or_404(
+            Room.objects.select_related("venue"),
+            venue__slug=venue_slug,
+            slug=room_slug,
+        )
+        last = (
+            Fingerprint.objects.filter(room=room)
+            .order_by("-captured_at")
+            .values_list("captured_at", flat=True)
+            .first()
+        )
+        return Response(
+            {
+                "venue": room.venue.slug,
+                "room": room.slug,
+                "fingerprint_count": Fingerprint.objects.filter(room=room).count(),
+                "last_captured_at": last,
+            }
+        )
 
 
 class HealthView(APIView):

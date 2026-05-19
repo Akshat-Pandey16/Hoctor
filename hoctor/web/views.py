@@ -38,6 +38,16 @@ class TrackView(TemplateView):
         return ctx
 
 
+class CaptureView(TemplateView):
+    template_name = "web/capture.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["venues"] = Venue.objects.prefetch_related("rooms").order_by("name")
+        ctx["devices"] = Device.objects.order_by("name")
+        return ctx
+
+
 def venue_detail(request, slug: str):
     venue = get_object_or_404(Venue.objects.prefetch_related("rooms__fingerprints"), slug=slug)
     rooms = list(
