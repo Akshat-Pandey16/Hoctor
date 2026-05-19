@@ -289,8 +289,8 @@ class CaptureView(APIView):
             [
                 AccessPointSample(
                     fingerprint=fingerprint,
-                    ssid=r.ssid,
-                    bssid=r.bssid,
+                    ssid=(r.ssid or "").strip(),
+                    bssid=(r.bssid or "").strip().lower().replace("-", ":"),
                     signal=r.signal,
                     frequency=r.frequency,
                 )
