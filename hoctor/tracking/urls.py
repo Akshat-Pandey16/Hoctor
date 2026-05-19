@@ -12,6 +12,7 @@ from .views import (
     RoomStatsView,
     ScanDetailView,
     ScanListView,
+    VenueDiagnosticsView,
 )
 
 app_name = "tracking"
@@ -29,5 +30,10 @@ urlpatterns = [
         "venues/<slug:venue_slug>/rooms/<slug:room_slug>/stats/",
         RoomStatsView.as_view(),
         name="room-stats",
+    ),
+    path(
+        "venues/<slug:venue_slug>/diagnostics/",
+        VenueDiagnosticsView.as_view(),
+        name="venue-diagnostics",
     ),
 ]

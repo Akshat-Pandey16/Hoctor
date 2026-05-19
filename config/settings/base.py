@@ -13,6 +13,9 @@ env = environ.Env(
     HOCTOR_SCANNER_BACKEND=(str, "mock"),
     HOCTOR_MODEL_DIR=(str, str(BASE_DIR / "models")),
     HOCTOR_PREDICTION_MIN_SAMPLES=(int, 3),
+    HOCTOR_CLASSIFIER=(str, "knn"),
+    HOCTOR_KNN_NEIGHBORS=(int, 5),
+    HOCTOR_AP_MIN_OBSERVATIONS=(int, 2),
 )
 
 env.read_env(str(BASE_DIR / ".env"))
@@ -128,6 +131,9 @@ HOCTOR = {
     "SCANNER_BACKEND": env.str("HOCTOR_SCANNER_BACKEND"),
     "MODEL_DIR": Path(env.str("HOCTOR_MODEL_DIR")),
     "PREDICTION_MIN_SAMPLES": env.int("HOCTOR_PREDICTION_MIN_SAMPLES"),
+    "CLASSIFIER": env.str("HOCTOR_CLASSIFIER").lower(),
+    "KNN_NEIGHBORS": env.int("HOCTOR_KNN_NEIGHBORS"),
+    "AP_MIN_OBSERVATIONS": env.int("HOCTOR_AP_MIN_OBSERVATIONS"),
 }
 
 LOGGING = {

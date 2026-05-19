@@ -23,5 +23,7 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 HOCTOR["MODEL_DIR"] = Path(tempfile.mkdtemp(prefix="hoctor-models-"))
 HOCTOR["SCANNER_BACKEND"] = "mock"
 HOCTOR["PREDICTION_MIN_SAMPLES"] = 2
+HOCTOR["AP_MIN_OBSERVATIONS"] = 1
+HOCTOR["KNN_NEIGHBORS"] = 3
 
 LOGGING["root"]["level"] = "ERROR"

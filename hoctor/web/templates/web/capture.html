@@ -71,6 +71,26 @@
   </section>
 
   <section class="lg:col-span-3 space-y-6">
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6" x-show="venue">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Model quality (this venue)</p>
+          <p class="mt-1 text-sm text-slate-300">
+            <span x-show="diag.accuracy !== null && diag.accuracy !== undefined">
+              <span class="text-2xl font-semibold tabular-nums" :class="accuracyColor()" x-text="((diag.accuracy||0)*100).toFixed(0) + '%'"></span>
+              <span class="text-xs text-slate-500">leave-one-out accuracy</span>
+            </span>
+            <span x-show="diag.accuracy === null || diag.accuracy === undefined" class="text-sm text-slate-500">Not enough data to score yet.</span>
+          </p>
+          <p class="mt-1 text-xs text-slate-500"><span x-text="diag.fingerprint_count || 0"></span> fingerprints · <span x-text="diag.room_count || 0"></span> rooms · <span x-text="diag.feature_count || 0"></span> APs · classifier=<span x-text="diag.classifier || '—'"></span></p>
+        </div>
+        <button type="button" @click="loadDiag()" class="text-xs text-brand-300 hover:text-brand-200">refresh</button>
+      </div>
+      <ul x-show="(diag.notes || []).length > 0" class="mt-3 space-y-1 text-xs text-amber-300/90">
+        <template x-for="note in (diag.notes || [])" :key="note"><li>• <span x-text="note"></span></li></template>
+      </ul>
+    </div>
+
     <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
       <p class="text-xs font-semibold uppercase tracking-widest text-slate-500">Selected room</p>
       <div class="mt-2 flex items-baseline justify-between gap-4">
@@ -123,7 +143,20 @@
       busy: false,
       error: null,
       stats: { fingerprint_count: 0, last_captured_at: null },
+      diag: {},
       captures: [],
+
+      accuracyColor() {
+        const a = this.diag.accuracy ?? 0;
+        if (a >= 0.85) return 'text-emerald-300';
+        if (a >= 0.65) return 'text-amber-300';
+        return 'text-rose-300';
+      },
+      async loadDiag() {
+        if (!this.venue) { this.diag = {}; return; }
+        const res = await fetch(`/api/v1/venues/${this.venue}/diagnostics/`);
+        if (res.ok) this.diag = await res.json();
+      },
 
       async init() {
         if (!this.venues.length) {
@@ -147,7 +180,11 @@
         return `${v.name} · ${r.name}`;
       },
       get canCapture() { return this.venue && this.room; },
-      onVenueChange() { this.room = ''; this.stats = { fingerprint_count: 0, last_captured_at: null }; },
+      onVenueChange() {
+        this.room = '';
+        this.stats = { fingerprint_count: 0, last_captured_at: null };
+        this.loadDiag();
+      },
       async loadStats() {
         if (!this.venue || !this.room) return;
         const res = await fetch(`/api/v1/venues/${this.venue}/rooms/${this.room}/stats/`);
@@ -210,6 +247,7 @@
             captured_at: data.captured_at,
           });
           await this.loadStats();
+          await this.loadDiag();
         } catch (e) {
           this.error = e.message;
         } finally {

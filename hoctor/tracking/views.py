@@ -10,7 +10,7 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from hoctor.venues.models import Room
+from hoctor.venues.models import Room, Venue
 
 from .models import Device, Fingerprint, Scan
 from .serializers import (
@@ -331,6 +331,40 @@ class RoomStatsView(APIView):
                 "room": room.slug,
                 "fingerprint_count": Fingerprint.objects.filter(room=room).count(),
                 "last_captured_at": last,
+            }
+        )
+
+
+class VenueDiagnosticsView(APIView):
+    @extend_schema(
+        operation_id="venues_diagnostics",
+        responses=inline_serializer(
+            name="VenueDiagnostics",
+            fields={
+                "venue_slug": serializers.CharField(),
+                "fingerprint_count": serializers.IntegerField(),
+                "room_count": serializers.IntegerField(),
+                "feature_count": serializers.IntegerField(),
+                "classifier": serializers.CharField(),
+                "accuracy": serializers.FloatField(allow_null=True),
+                "per_room_counts": serializers.DictField(child=serializers.IntegerField()),
+                "notes": serializers.ListField(child=serializers.CharField()),
+            },
+        ),
+    )
+    def get(self, request, venue_slug: str):
+        venue = get_object_or_404(Venue, slug=venue_slug)
+        diag = get_predictor().diagnostics(venue)
+        return Response(
+            {
+                "venue_slug": diag.venue_slug,
+                "fingerprint_count": diag.fingerprint_count,
+                "room_count": diag.room_count,
+                "feature_count": diag.feature_count,
+                "classifier": diag.classifier,
+                "accuracy": diag.accuracy,
+                "per_room_counts": diag.per_room_counts,
+                "notes": diag.notes,
             }
         )
 
